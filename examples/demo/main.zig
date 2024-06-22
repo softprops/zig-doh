@@ -12,7 +12,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     // create a client
-    var client = doh.Client.init(allocator, .{.provider});
+    var client = doh.Client.init(allocator, .{});
     defer client.deinit();
 
     // resolve a dns name
