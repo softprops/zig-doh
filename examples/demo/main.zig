@@ -22,6 +22,6 @@ pub fn main() !void {
 
     // inspect the answer
     for (resp.value.Answer) |answer| {
-        std.debug.print("type: {s} name: {s} data: {s}\n", .{ answer.recordType().toString(), answer.name, answer.data });
+        std.debug.print("type: {s} name: {s} data: {s}\n", .{ @tagName(answer.recordType()), answer.name, answer.data });
     }
 }

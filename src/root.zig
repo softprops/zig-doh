@@ -21,14 +21,59 @@ pub const Answer = struct {
 
 /// A response to a resolve request
 pub const Response = struct {
+    /// https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-6
     Status: usize,
+    /// If true, it means the truncated bit was set. This happens when the DNS answer is larger than a single UDP or TCP packet.
     TC: bool,
+    /// If true, it means the Recursive Desired bit was set.
     RD: bool,
+    /// If true, it means the Recursion Available bit was set.
     RA: bool,
+    /// If true, it means that every record in the answer was verified with DNSSEC.
     AD: bool,
+    /// If true, the client asked to disable DNSSEC validation. In this case, Cloudflare will still fetch the DNSSEC-related records, but it will not attempt to validate the records.
     CD: bool,
+    /// The record name requested.
     Question: []const Question,
+    /// The record owner.
     Answer: []const Answer,
+    fn responseCode(self: *@This()) ResponseCode {
+        return ResponseCode.fromInt(self.Status);
+    }
+};
+
+/// https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-6
+pub const ResponseCode = enum(usize) {
+    noerror = 0,
+    formerr = 1,
+    servfail = 2,
+    nxdomain = 3,
+    noimpl = 4,
+    refused = 5,
+    yxdomain = 6,
+    yxrrset = 7,
+    nxrrset = 8,
+    notauth = 9,
+    notzone = 10,
+    dsotypeni = 11,
+    badvers = 16,
+    badkey = 17,
+    badtime = 18,
+    badmode = 19,
+    badname = 20,
+    badalg = 21,
+    badtrunc = 22,
+    badcookie = 23,
+    unassigned = 24,
+    reserved = 65535,
+
+    fn fromInt(int: usize) ResponseCode {
+        return switch (int) {
+            12...15, 24...3840, 4096...65534 => .unassigned,
+            3841...4095, 65535 => .reserved,
+            else => |n| @enumFromInt(n),
+        };
+    }
 };
 
 /// An enumeration of dns record types
@@ -55,9 +100,6 @@ pub const RecordType = enum(usize) {
     ANY = 255,
     CAA = 257,
     // todo: fill in others as needed
-    pub fn toString(self: @This()) []const u8 {
-        return @tagName(self);
-    }
     pub fn fromInt(i: usize) RecordType {
         //std.debug.print("resolving int {d}\n", .{i});
         return @enumFromInt(i);
@@ -82,7 +124,7 @@ pub const Provider = union(enum) {
     ///
     /// see also https://developers.google.com/speed/public-dns/docs/doh/json
     google: void,
-    /// Cloudflare provider
+    /// Cloudflare provider aka (1.1.1.1)
     ///
     /// see also https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/dns-json/
     cloudflare: void,
@@ -180,7 +222,8 @@ test Client {
     defer client.deinit();
     var resp = try client.resolve("google.com", .{});
     defer resp.deinit();
+    std.debug.print("status {s}\n", .{@tagName(resp.value.responseCode())});
     for (resp.value.Answer) |ans| {
-        std.debug.print("ans {s} {s} {s}\n", .{ ans.recordType().toString(), ans.name, ans.data });
+        std.debug.print("{s} {s} {s}\n", .{ @tagName(ans.recordType()), ans.name, ans.data });
     }
 }
