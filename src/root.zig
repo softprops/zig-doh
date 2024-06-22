@@ -77,18 +77,23 @@ pub const ResolveOptions = struct {
     do: bool = false,
 };
 
-pub const Provider = enum {
+pub const Provider = union(enum) {
     /// Google provider
-    /// https://developers.google.com/speed/public-dns/docs/doh/json
-    google,
+    ///
+    /// see also https://developers.google.com/speed/public-dns/docs/doh/json
+    google: void,
     /// Cloudflare provider
-    /// https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/dns-json/
-    cloudflare,
+    ///
+    /// see also https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/dns-json/
+    cloudflare: void,
+    /// a custom user-provided https endpoint
+    custom: []const u8,
 
     fn endpoint(self: @This()) []const u8 {
         return switch (self) {
             .google => "https://dns.google/resolve",
             .cloudflare => "https://cloudflare-dns.com/dns-query",
+            .custom => |e| e,
         };
     }
 };
