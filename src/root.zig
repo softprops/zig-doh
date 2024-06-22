@@ -38,6 +38,7 @@ pub const RecordType = enum(usize) {
     ns = 2,
     cname = 5,
     soa = 6,
+    hinfo = 13,
     mx = 15,
     txt = 16,
     key = 25,
@@ -58,6 +59,7 @@ pub const RecordType = enum(usize) {
         return @tagName(self);
     }
     pub fn fromInt(i: usize) RecordType {
+        //std.debug.print("resolving int {d}\n", .{i});
         return @enumFromInt(i);
     }
     pub fn toInt(self: @This()) usize {

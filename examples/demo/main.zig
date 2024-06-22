@@ -17,7 +17,7 @@ pub fn main() !void {
 
     // resolve a dns name
 
-    var resp = try client.resolve(name, .{});
+    var resp = try client.resolve(name, .{ .type = .a });
     defer resp.deinit();
 
     // inspect the answer
