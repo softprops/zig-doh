@@ -19,6 +19,7 @@ pub const Answer = struct {
     }
 };
 
+/// A response to a resolve request
 pub const Response = struct {
     Status: usize,
     TC: bool,
@@ -30,12 +31,14 @@ pub const Response = struct {
     Answer: []const Answer,
 };
 
+/// An enumeration of dns record types
 /// https://en.wikipedia.org/wiki/List_of_DNS_record_types
 pub const RecordType = enum(usize) {
     a = 1,
     ns = 2,
     cname = 5,
     soa = 6,
+    mx = 15,
     txt = 16,
     key = 25,
     aaaa = 28,
@@ -47,18 +50,28 @@ pub const RecordType = enum(usize) {
     dhcid = 49,
     nsec3param = 51,
     openpgpkey = 61,
+    https = 65,
+    any = 255,
     caa = 257,
     // todo: fill in others as needed
-    pub fn string(self: @This()) []const u8 {
+    pub fn toString(self: @This()) []const u8 {
         return @tagName(self);
     }
     pub fn fromInt(i: usize) RecordType {
         return @enumFromInt(i);
     }
+    pub fn toInt(self: @This()) usize {
+        return @intFromEnum(self);
+    }
 };
+
+/// a collection of options for resolving a dns name
 pub const ResolveOptions = struct {
-    type: RecordType = .a,
+    /// Record type, defaults to "any"
+    type: RecordType = .any,
+    /// The CD (Checking Disabled) flag, defaults to false
     cd: bool = false,
+    /// The DO (DNSSEC OK) flag, defaults to false
     do: bool = false,
 };
 
@@ -90,10 +103,13 @@ pub const ClientOptions = struct {
     provider: Provider = .google,
 };
 
+/// A type which carries ownership over the memory value is attached to
+/// call deinit() after using the value to free it
 pub fn Owned(comptime T: type) type {
     return struct {
         value: T,
         arena: *std.heap.ArenaAllocator,
+        /// free's memory associated with value
         pub fn deinit(self: @This()) void {
             const allocator = self.arena.child_allocator;
             self.arena.deinit();
@@ -102,10 +118,12 @@ pub fn Owned(comptime T: type) type {
     };
 }
 
+/// A DoH client
 pub const Client = struct {
     allocator: std.mem.Allocator,
     options: ClientOptions,
     client: std.http.Client,
+    /// constructs a new Client with a set of options
     pub fn init(allocator: std.mem.Allocator, options: ClientOptions) @This() {
         return .{
             .allocator = allocator,
@@ -117,12 +135,15 @@ pub const Client = struct {
         };
     }
 
+    /// free's allocated resources
     pub fn deinit(self: *@This()) void {
         self.client.deinit();
     }
 
+    /// resolves a dns name with a provided set of options. these default to resolving the name for any type of record
+    /// for specific cases you will want to request a specific type of record
     pub fn resolve(self: *@This(), name: []const u8, options: ResolveOptions) !Owned(Response) {
-        const url = try std.fmt.allocPrint(self.allocator, "{s}?name={s}&type={s}&cd={any}&do={any}", .{ self.options.provider.endpoint(), name, @tagName(options.type), options.cd, options.do });
+        const url = try std.fmt.allocPrint(self.allocator, "{s}?name={s}&type={d}&cd={any}&do={any}", .{ self.options.provider.endpoint(), name, options.type.toInt(), options.cd, options.do });
         defer self.allocator.free(url);
         var resp = std.ArrayList(u8).init(self.allocator);
 
