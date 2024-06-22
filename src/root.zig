@@ -150,7 +150,7 @@ test Client {
     const allocator = std.testing.allocator;
     var client = Client.init(allocator, .{});
     defer client.deinit();
-    var resp = try client.resolve("_mongodb._tcp.cluster0.sm7ifrp.mongodb.net", .{ .type = .srv });
+    var resp = try client.resolve("google.com", .{});
     defer resp.deinit();
     //std.debug.print("ans {any}", .{resp.value});
     for (resp.value.Answer) |ans| {
