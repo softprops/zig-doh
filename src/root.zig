@@ -152,7 +152,6 @@ test Client {
     defer client.deinit();
     var resp = try client.resolve("google.com", .{});
     defer resp.deinit();
-    //std.debug.print("ans {any}", .{resp.value});
     for (resp.value.Answer) |ans| {
         std.debug.print("ans {any} {s} {s}\n", .{ ans.recordType(), ans.name, ans.data });
     }
