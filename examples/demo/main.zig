@@ -12,12 +12,12 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     // create a client
-    var client = doh.Client.init(allocator, .{});
+    var client = doh.Client.init(allocator, .{.provider});
     defer client.deinit();
 
     // resolve a dns name
 
-    var resp = try client.resolve(name, .{ .type = .a });
+    var resp = try client.resolve(name, .{ .type = .A });
     defer resp.deinit();
 
     // inspect the answer

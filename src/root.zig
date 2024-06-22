@@ -34,26 +34,26 @@ pub const Response = struct {
 /// An enumeration of dns record types
 /// https://en.wikipedia.org/wiki/List_of_DNS_record_types
 pub const RecordType = enum(usize) {
-    a = 1,
-    ns = 2,
-    cname = 5,
-    soa = 6,
-    hinfo = 13,
-    mx = 15,
-    txt = 16,
-    key = 25,
-    aaaa = 28,
-    srv = 33,
-    dname = 39,
-    ds = 43,
-    ipseckey = 45,
-    dnskey = 48,
-    dhcid = 49,
-    nsec3param = 51,
-    openpgpkey = 61,
-    https = 65,
-    any = 255,
-    caa = 257,
+    A = 1,
+    NS = 2,
+    CNAME = 5,
+    SOA = 6,
+    HINFO = 13,
+    MX = 15,
+    TXT = 16,
+    KEY = 25,
+    AAAA = 28,
+    SRV = 33,
+    DNAME = 39,
+    DS = 43,
+    IPSECKEY = 45,
+    DNSKEY = 48,
+    DHCID = 49,
+    NSEC3PARAM = 51,
+    OPENPGPKEY = 61,
+    HTTPS = 65,
+    ANY = 255,
+    CAA = 257,
     // todo: fill in others as needed
     pub fn toString(self: @This()) []const u8 {
         return @tagName(self);
@@ -69,8 +69,8 @@ pub const RecordType = enum(usize) {
 
 /// a collection of options for resolving a dns name
 pub const ResolveOptions = struct {
-    /// Record type, defaults to "any"
-    type: RecordType = .any,
+    /// Record type, defaults to "ANY"
+    type: RecordType = .ANY,
     /// The CD (Checking Disabled) flag, defaults to false
     cd: bool = false,
     /// The DO (DNSSEC OK) flag, defaults to false
@@ -176,6 +176,6 @@ test Client {
     var resp = try client.resolve("google.com", .{});
     defer resp.deinit();
     for (resp.value.Answer) |ans| {
-        std.debug.print("ans {any} {s} {s}\n", .{ ans.recordType(), ans.name, ans.data });
+        std.debug.print("ans {s} {s} {s}\n", .{ ans.recordType().toString(), ans.name, ans.data });
     }
 }
