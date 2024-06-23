@@ -11,8 +11,8 @@ pub fn main() !void {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    // create a client
-    var client = doh.Client.init(allocator, .{});
+    // create a client using default provider, google. you can also use cloudflare, or a custom provider endpoint. this endpoint must support TLS 1.3
+    var client = doh.Client.init(allocator, .{ .provider = .quad9 });
     defer client.deinit();
 
     // resolve a dns name

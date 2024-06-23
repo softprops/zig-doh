@@ -189,15 +189,18 @@ pub const Client = struct {
         self.client.deinit();
     }
 
-    /// resolves a dns name with a provided set of options. these default to resolving the name for any type of record
-    /// for specific cases you will want to request a specific type of record
+    /// resolves a dns name with a provided set of options. these default to resolving the name for any type of record.
+    /// For specific cases you will want to request a specific type of record
     pub fn resolve(self: *@This(), name: []const u8, options: ResolveOptions) !Owned(Response) {
         const url = try std.fmt.allocPrint(self.allocator, "{s}?name={s}&type={d}&cd={any}&do={any}", .{ self.options.provider.endpoint(), name, options.type.toInt(), options.cd, options.do });
         defer self.allocator.free(url);
         var resp = std.ArrayList(u8).init(self.allocator);
-
+        defer resp.deinit();
         const res = try self.client.fetch(.{
             .location = .{ .url = url },
+            .headers = .{
+                .user_agent = .{ .override = "doh" },
+            },
             .extra_headers = &.{
                 .{
                     .name = "Accept",
@@ -206,11 +209,12 @@ pub const Client = struct {
             },
             .response_storage = .{ .dynamic = &resp },
         });
+
+        const bytes = try resp.toOwnedSlice();
+        defer self.allocator.free(bytes);
         if (res.status.class() != .success) {
             return error.RequestFailed;
         }
-        const bytes = try resp.toOwnedSlice();
-        defer self.allocator.free(bytes);
         const parsed = try std.json.parseFromSlice(Response, self.allocator, bytes, .{ .ignore_unknown_fields = true, .allocate = .alloc_always });
         return Owned(Response){ .value = parsed.value, .arena = parsed.arena };
     }
